@@ -54,15 +54,39 @@ app.delete("/api/blogs/:id", (request, response) => {
 });
 
 app.post("/api/blogs", (request, response) => {
-  const maxId =
-    blogPosts.length > 0 ? Math.max(...blogPosts.map((n) => n.id)) : 0;
+  const body = request.body;
 
-  const blog = request.body;
-  blog.id = maxId + 1;
+  if (!body.title) {
+    return response.status(400).json({
+      error: "title missing",
+    });
+  } else if (!body.url) {
+    return response.status(400).json({
+      error: "url missing",
+    });
+  }
+
+  const blog = {
+    id: generateId(),
+    title: body.title,
+    author: body.author,
+    url: body.url,
+    upvotes: body.upvotes,
+  };
 
   blogPosts = blogPosts.concat(blog);
   response.json(blog);
 });
+
+app.get("/info", (request, response) => {
+  response.send(`<h2>Phonebook has info for ${blogPosts.length} people</h2>`);
+});
+
+const generateId = () => {
+  const maxId =
+    blogPosts.length > 0 ? Math.max(...blogPosts.map((blog) => blog.id)) : 0;
+  return maxId + 1;
+};
 
 const PORT = 3001;
 

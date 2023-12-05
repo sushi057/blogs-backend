@@ -2,7 +2,6 @@ POST http://localhost:3001/api/blogs/
 Content-Type: application/json
 
 {
-    "id": "4",
     "title": "Game Development with Unity",
     "author": "Sushi",
     "url": "example.com/game-dev-with-unity",
