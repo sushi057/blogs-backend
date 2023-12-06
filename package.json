@@ -7,7 +7,7 @@
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "build:ui": "rmdir /s /q dist && cd ..\\blog-frontend && npm run build && copy /y dist ..\\blog-backend",
+    "build:ui": "rmdir /s /q dist && cd ..\\blog-frontend && npm run build && xcopy /s /i dist ..\\blog-backend",
     "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push"
   },
   "author": "sushi",
