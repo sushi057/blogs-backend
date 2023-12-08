@@ -1,64 +1,44 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const Blog = require("./models/blog");
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static("dist"));
 
-let blogPosts = [
-  {
-    id: 1,
-    title: "The Art of Web Development",
-    author: "John Doe",
-    url: "https://example.com/web-development-art",
-    upvotes: 45,
-  },
-  {
-    id: 2,
-    title: "Exploring Artificial Intelligence",
-    author: "Jane Smith",
-    url: "https://example.com/exploring-ai",
-    upvotes: 72,
-  },
-  {
-    id: 3,
-    title: "The Rise of Remote Work",
-    author: "Alex Johnson",
-    url: "https://example.com/rise-of-remote-work",
-    upvotes: 34,
-  },
-  // Add more blog entries as needed
-];
-
+//Get homepage
 app.get("/", (request, response) => {
-  response.send("<h1>Hello request</h1>");
+  response.send("<h1>Hello. This is the homepage</h1>");
 });
 
+//Get all blogs
 app.get("/api/blogs", (request, response) => {
-  response.json(blogPosts);
+  Blog.find().then((blogs) => {
+    response.json(blogs);
+  });
 });
 
-app.get("/api/blogs/:id", (request, response) => {
-  const blog = blogPosts.find((blog) => blog.id === Number(request.params.id));
-
-  console.log(blog);
-  if (blog) {
-    response.json(blog);
-  } else {
-    response.status(404).end();
-  }
+//Get specific blog
+app.get("/api/blogs/:id", (request, response, next) => {
+  Blog.findById(request.params.id)
+    .then((blog) => {
+      if (blog) {
+        response.json(blog);
+      } else {
+        response.status(404).end();
+      }
+    })
+    .catch((error) => next(error));
 });
 
-app.delete("/api/blogs/:id", (request, response) => {
-  blogPosts = blogPosts.filter((blog) => blog.id !== Number(request.params.id));
-
-  response.status(204).end();
-});
-
+//Add new blog
 app.post("/api/blogs", (request, response) => {
   const body = request.body;
 
+  //check for missing contents
   if (!body.title) {
     return response.status(400).json({
       error: "title missing",
@@ -69,28 +49,43 @@ app.post("/api/blogs", (request, response) => {
     });
   }
 
+  //add the newly given blog
+  const blog = new Blog({
+    title: body.title,
+    author: body.author,
+    url: body.url,
+    upvotes: body.upvotes,
+  });
+
+  blog.save().then((savedBlog) => {
+    response.json(savedBlog);
+  });
+});
+
+//Update a blog
+app.put("/api/blogs/:id", (request, response, next) => {
+  const body = request.body;
+
   const blog = {
-    id: generateId(),
     title: body.title,
     author: body.author,
     url: body.url,
     upvotes: body.upvotes,
   };
 
-  blogPosts = blogPosts.concat(blog);
-  response.json(blog);
+  Blog.findByIdAndUpdate(request.params.id, blog, { new: true })
+    .then((updatedBlog) => {
+      response.json(updatedBlog);
+    })
+    .catch((error) => next(error));
 });
 
+//Get info page
 app.get("/info", (request, response) => {
-  response.send(`<h2>Phonebook has info for ${blogPosts.length} people</h2>`);
+  response.send(`<h2>Phonebook has info for ${Blog.length} people</h2>`);
 });
 
-const generateId = () => {
-  const maxId =
-    blogPosts.length > 0 ? Math.max(...blogPosts.map((blog) => blog.id)) : 0;
-  return maxId + 1;
-};
-
+//Log the blog info
 const requestLogger = (request, response, next) => {
   console.log("Method", request.method);
   console.log("Path:", request.path);
@@ -98,14 +93,29 @@ const requestLogger = (request, response, next) => {
   console.log("------");
   next();
 };
+
+//Handle unkown endpoint error
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: "unknown endpoint" });
 };
 
-app.use(unknownEndpoint);
-app.use(requestLogger);
+const errorHandler = (error, request, response, next) => {
+  console.log(error.message);
 
-const PORT = process.env.PORT || 3001;
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "Malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).send({ error: error.message });
+  }
+
+  next(error);
+};
+
+app.use(requestLogger);
+app.use(unknownEndpoint);
+app.use(errorHandler);
+
+const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
   console.log("Server running on 3001");
