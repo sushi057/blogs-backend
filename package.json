@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --verbose",
     "dev": "nodemon index.js",
     "build:ui": "rmdir /s /q ..\\blog-backend\\dist && cd ../blog-frontend && npm run build && xcopy /s /e dist ..\\blog-backend\\dist",
     "deploy:full": "npm run build:ui && cd ../blog-backend && git add . && git commit -m uibuild && git push",
