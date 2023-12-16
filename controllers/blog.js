@@ -40,7 +40,7 @@ blogRouter.post("/", async (request, response) => {
   response.status(201).json(savedBlog);
 });
 
-blogRouter.put("/:id", (request, response, next) => {
+blogRouter.put("/:id", async (request, response) => {
   const body = request.body;
 
   const blog = {
@@ -50,11 +50,10 @@ blogRouter.put("/:id", (request, response, next) => {
     upvotes: body.upvotes,
   };
 
-  Blog.findByIdAndUpdate(request.params.id, blog, { new: true })
-    .then((updatedBlog) => {
-      response.json(updatedBlog);
-    })
-    .catch((error) => next(error));
+  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, {
+    new: true,
+  });
+  response.json(updatedBlog);
 });
 
 module.exports = blogRouter;

@@ -10,100 +10,117 @@ const api = supertest(app);
 
 jest.setTimeout(30000);
 
-//Load the database with premade data
+//Load the database with precooked data
 beforeEach(async () => {
   await Blog.deleteMany({});
-  let blogObject = new Blog(helper.initialBlogs[0]);
-  await blogObject.save();
-
-  blogObject = new Blog(helper.initialBlogs[1]);
-  await blogObject.save();
+  await Blog.insertMany(helper.initialBlogs);
 });
 
-//Test returned blogs are in json format
-test("Blogs are in json", async () => {
-  await api
-    .get("/api/blogs")
-    .expect(200)
-    .expect("Content-Type", /application\/json/);
-}, 10000);
+describe("When there are blogs in saved", () => {
+  //Test returned blogs are in json format
+  test("Blogs are in json", async () => {
+    await api
+      .get("/api/blogs")
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
+  }, 10000);
 
-//Test number of blogs in database
-test("All blogs are returned", async () => {
-  const response = await api.get("/api/blogs");
-  console.log(response.body);
+  //Test number of blogs in database
+  test("All blogs are returned", async () => {
+    const response = await api.get("/api/blogs");
+    console.log(response.body);
 
-  expect(response.body).toHaveLength(helper.initialBlogs.length);
-}, 10000);
+    expect(response.body).toHaveLength(helper.initialBlogs.length);
+  }, 10000);
 
-//Test blog's title in database
-test("A blog in the database is", async () => {
-  const response = await api.get("/api/blogs");
+  //Check if a blog exists
+  test("A blog in the database is", async () => {
+    const response = await api.get("/api/blogs");
 
-  const titles = response.body.map((r) => r.title);
-  expect(titles).toContain("Testing my tests");
+    const titles = response.body.map((r) => r.title);
+    expect(titles).toContain("Testing my tests");
+  });
 });
 
-//Test if a blog can be added to database
-test("A valid blog can be aded", async () => {
-  const newBlog = {
-    title: "How to use async/await",
-    author: "fullstackopen",
-    url: "exmple.com",
-  };
+describe("Viewing a specifi blog", () => {
+  //Test if a blog can be viewed
+  test("succeeds with a valid id", async () => {
+    const blogsAtStart = await helper.blogsInDb();
 
-  await api
-    .post("/api/blogs")
-    .send(newBlog)
-    .expect(201)
-    .expect("Content-Type", /application\/json/);
+    const blogToView = blogsAtStart[0];
 
-  const blogsAtEnd = await helper.blogsInDb();
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
+    const resultBlog = await api
+      .get(`/api/blogs/${blogToView.id}`)
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
 
-  const titles = blogsAtEnd.map((blog) => blog.title);
-  expect(titles).toContain("How to use async/await");
+    expect(resultBlog.body).toEqual(blogToView);
+  });
+
+  //Test for a non existing blog
+  test("fails with statuscode 404 if blog doesnt exist", async () => {
+    const nonExistingId = await helper.nonExistingId();
+
+    await api.get(`/api/blogs/${nonExistingId}`).expect(404);
+  });
+
+  test("fails with statuscode 400 if id is invalid", async () => {
+    const invalidId = "5a3d5da59070081a82a3445";
+
+    await api.get(`/api/blogs/${invalidId}`).expect(400);
+  });
 });
 
-//Test if a blog without title isnt saved to database
-test("A blog without title", async () => {
-  const newBlog = {
-    author: "nobody cares",
-    url: "cats.com",
-  };
+describe("Addition of a new blog", () => {
+  //Test if a blog can be added to database
+  test("succeeds for a valid blog", async () => {
+    const newBlog = {
+      title: "How to use async/await",
+      author: "fullstackopen",
+      url: "exmple.com",
+    };
 
-  await api.post("/api/blogs").send(newBlog).expect(400);
+    await api
+      .post("/api/blogs")
+      .send(newBlog)
+      .expect(201)
+      .expect("Content-Type", /application\/json/);
 
-  const blogsAtEnd = await helper.blogsInDb();
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
+
+    const titles = blogsAtEnd.map((blog) => blog.title);
+    expect(titles).toContain("How to use async/await");
+  });
+
+  //Test if a blog without title isnt saved to database
+  test("fails for a blog without title", async () => {
+    const newBlog = {
+      author: "nobody cares",
+      url: "cats.com",
+    };
+
+    await api.post("/api/blogs").send(newBlog).expect(400);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+  });
 });
 
-//Test if a blog can be viewed
-test("A specific blog can be viewed", async () => {
-  const blogsAtStart = await helper.blogsInDb();
+describe("Deletion of a blog", () => {
+  //Test if a blog can be removed
+  test("succeeds with code 204", async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToView = blogsAtStart[0];
 
-  const blogToView = blogsAtStart[0];
+    await api.delete(`/api/blogs/${blogToView.id}`).expect(204);
 
-  const resultBlog = await api
-    .get(`/api/blogs/${blogToView.id}`)
-    .expect(200)
-    .expect("Content-Type", /application\/json/);
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1);
 
-  expect(resultBlog.body).toEqual(blogToView);
-});
-
-//Test if a blog can be removed
-test("A specific blog can be removed", async () => {
-  const blogsAtStart = await helper.blogsInDb();
-  const blogToView = blogsAtStart[0];
-
-  await api.delete(`/api/blogs/${blogToView.id}`).expect(204);
-
-  const blogsAtEnd = await helper.blogsInDb();
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1);
-
-  const titles = blogsAtEnd.map((blog) => blog.title);
-  expect(titles).not.toContain(blogToView.title);
+    const titles = blogsAtEnd.map((blog) => blog.title);
+    expect(titles).not.toContain(blogToView.title);
+  });
 });
 
 afterAll(async () => {
