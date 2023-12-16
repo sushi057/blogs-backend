@@ -82,7 +82,6 @@ describe("total likes", () => {
 
   test("of multiple blogs array is the sum of all likes", () => {
     const result = listHelper.totalLikes(listWithManyBlogs);
-    console.log(result);
     expect(result).toBe(36);
   });
 });
@@ -90,7 +89,6 @@ describe("total likes", () => {
 describe("Favorite blogs in", () => {
   test("empty blog array is null", () => {
     const result = listHelper.favoriteBlog([]);
-    console.log(result);
     expect(result).toEqual(null);
   });
 
