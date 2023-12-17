@@ -32,7 +32,7 @@ blogRouter.post("/", async (request, response) => {
   const blog = new Blog({
     title: body.title,
     url: body.url,
-    author: body.url,
+    author: body.author,
     upvotes: body.upvotes,
   });
 
