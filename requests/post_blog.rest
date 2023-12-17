@@ -2,8 +2,9 @@ POST http://localhost:3001/api/blogs/
 Content-Type: application/json
 
 {
-    "title": "Game Development with Unity",
+    "title": "Game Development with Unreal",
     "author": "Sushi",
     "url": "example.com/game-dev-with-unity",
-    "upvotes": 22
+    "upvotes": 22,
+    "userId" : "657f26603ed3acfd760d2b44"
 }
