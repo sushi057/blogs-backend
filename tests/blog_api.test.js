@@ -157,6 +157,7 @@ describe("When there is initially one user in the database", () => {
 
     const user = new User({
       username: "root",
+      name: "Root admin",
       passwordHash,
     });
 
@@ -204,6 +205,20 @@ describe("When there is initially one user in the database", () => {
 
     const usersAtEnd = await helper.usersInDb();
     expect(usersAtStart).toEqual(usersAtEnd);
+  });
+
+  test("creation fails when username or password is missing", async () => {
+    const newUser = {
+      name: "Samikshya Joshi",
+    };
+
+    const result = await api
+      .post("/api/users")
+      .send(newUser)
+      .expect(400)
+      .expect("Content-Type", /application\/json/);
+
+    expect(result.body.error).toBe("username or password missing");
   });
 });
 
