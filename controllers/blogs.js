@@ -1,13 +1,24 @@
-const blogRouter = require("express").Router();
+const blogsRouter = require("express").Router();
 const Blog = require("../models/blog");
 const User = require("../models/user");
+const jwt = require("jsonwebtoken");
 
-blogRouter.get("/", async (request, response) => {
+const getTokenFrom = (request) => {
+  const authorization = request.get("authorization");
+
+  if (authorization && authorization.startsWith("Bearer ")) {
+    return authorization.replace("Bearer ", "");
+  }
+
+  return null;
+};
+
+blogsRouter.get("/", async (request, response) => {
   const blogs = await Blog.find({}).populate("user", { username: 1, name: 1 });
   response.json(blogs);
 });
 
-blogRouter.get("/:id", async (request, response) => {
+blogsRouter.get("/:id", async (request, response) => {
   const blog = await Blog.findById(request.params.id);
   if (blog) {
     response.json(blog);
@@ -16,14 +27,20 @@ blogRouter.get("/:id", async (request, response) => {
   }
 });
 
-blogRouter.delete("/:id", async (request, response) => {
+blogsRouter.delete("/:id", async (request, response) => {
   await Blog.findByIdAndDelete(request.params.id);
   response.status(204).end();
 });
 
-blogRouter.post("/", async (request, response) => {
+blogsRouter.post("/", async (request, response) => {
   const body = request.body;
-  const user = await User.findById(body.userId);
+
+  const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: "invalid token" });
+  }
+
+  const user = await User.findById(decodedToken.id);
 
   if (!body.title) {
     return response.status(400).json({
@@ -46,7 +63,7 @@ blogRouter.post("/", async (request, response) => {
   response.status(201).json(savedBlog);
 });
 
-blogRouter.put("/:id", async (request, response) => {
+blogsRouter.put("/:id", async (request, response) => {
   const body = request.body;
 
   const blog = {
@@ -62,4 +79,4 @@ blogRouter.put("/:id", async (request, response) => {
   response.json(updatedBlog);
 });
 
-module.exports = blogRouter;
+module.exports = blogsRouter;
