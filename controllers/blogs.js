@@ -21,8 +21,13 @@ blogsRouter.get("/:id", async (request, response) => {
 
 //Delete a blog
 blogsRouter.delete("/:id", async (request, response) => {
+  const decodedToken = jwt.verify(request.token, process.env.SECRET);
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: "invalid token" });
+  }
+
   await Blog.findByIdAndDelete(request.params.id);
-  response.status(204).end();
+  response.status(204).json({ blog: "deleted" });
 });
 
 //Post new blog

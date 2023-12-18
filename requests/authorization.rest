@@ -1,9 +1,9 @@
 POST http://localhost:3001/api/blogs
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImtlcmFiYWhhZHVyIiwiaWQiOiI2NTdmMjY2MDNlZDNhY2ZkNzYwZDJiNDQiLCJpYXQiOjE3MDI4ODE1NjF9.VPwW7_CD9o6uKuK6e4ZuW11WAodElGE6r4Wxwm-LJNI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImtlcmFiYWhhZHVyIiwiaWQiOiI2NTdmMjY2MDNlZDNhY2ZkNzYwZDJiNDQiLCJpYXQiOjE3MDI4ODUwMTYsImV4cCI6MTcwMjg4ODYxNn0.v2tedlsHVU5mgWN-rP0FSFNrrl0Cb039-JO6Fq5XUMA
 
 {
-    "title" : "Token based authenticaiton and authorization",
+    "title" : "Tokens based authenticaiton and authorization",
     "author" : "kerabahadur",
     "url": "example.com"
 }
